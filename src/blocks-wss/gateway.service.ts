@@ -15,7 +15,6 @@ export class GatewayService implements OnModuleInit {
 
   onModuleInit() {
     setInterval(async () => {
-      console.log(this.nodeUrl);
       const latestBlockNumber = await this.getLatestBlock();
       if (latestBlockNumber !== this.previousBlockNumber) {
         this.updateBlock(latestBlockNumber);
