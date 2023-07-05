@@ -1,11 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import { Server } from 'socket.io';
-import { NODE_API_URL } from '../api/api';
+import { isMainnet, NODE_API_URL } from '../api/api';
 
 @Injectable()
 export class GatewayService implements OnModuleInit {
-  private readonly nodeUrl: string = NODE_API_URL();
+  private readonly nodeUrl: string = NODE_API_URL(isMainnet());
   private previousBlockNumber: number;
   private server: Server;
 
@@ -15,6 +15,7 @@ export class GatewayService implements OnModuleInit {
 
   onModuleInit() {
     setInterval(async () => {
+      console.log(this.nodeUrl);
       const latestBlockNumber = await this.getLatestBlock();
       if (latestBlockNumber !== this.previousBlockNumber) {
         this.updateBlock(latestBlockNumber);

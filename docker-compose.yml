@@ -15,4 +15,4 @@ services:
     ports:
       - "4092:4000"
     env_file:
-      - .env
+      - .env.testnet

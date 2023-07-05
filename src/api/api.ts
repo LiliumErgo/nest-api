@@ -6,7 +6,7 @@ export const EXPLORER_API_URL = () =>
     : (process.env.EXPLORER_TESTNET_API_URL as string)
   )?.replace(/[\\/]+$/, '');
 
-export const NODE_API_URL = () =>
+export const NODE_API_URL = (isMainnet: boolean) =>
   (isMainnet
     ? (process.env.NODE_MAINNET_API_URL as string)
     : (process.env.NODE_TESTNET_API_URL as string)
