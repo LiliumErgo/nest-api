@@ -1,0 +1,18 @@
+version: '3'
+services:
+  lilium-nest-mainnet:
+    build: .
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "4093:4000"
+    env_file:
+      - .env.mainnet
+  lilium-nest-testnet:
+    build: .
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "4092:4000"
+    env_file:
+      - .env
