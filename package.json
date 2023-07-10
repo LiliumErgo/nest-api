@@ -28,9 +28,12 @@
     "@nestjs/platform-express": "^10.0.5",
     "@nestjs/platform-socket.io": "^10.0.5",
     "@nestjs/websockets": "^10.0.5",
+    "@types/jsonwebtoken": "^9.0.2",
     "axios": "^1.4.0",
     "ergo-lib-wasm-browser": "^0.24.0",
+    "ergo-lib-wasm-nodejs": "^0.24.0",
     "json-bigint": "^1.0.0",
+    "jsonwebtoken": "^9.0.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "socket.io": "^4.7.1"

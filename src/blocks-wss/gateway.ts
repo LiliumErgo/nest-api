@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import { GatewayService } from './gateway.service';
 @WebSocketGateway({
   cors: {
-    origin: 'https://www.liliumergo.io',
+    origin: '*',
   },
 })
 export class BlockGateway implements OnGatewayInit {
