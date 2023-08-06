@@ -38,3 +38,7 @@ lerna-debug.log*
 .env
 .env.testnet
 .env.mainnet
+
+# node
+package-lock.json
+yarn.lock
