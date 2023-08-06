@@ -1,7 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import { Server } from 'socket.io';
-import { isMainnet, NODE_API_URL } from '../api/api';
+import { isMainnet, NODE_API_URL, NODE_LISTENER_URL} from '../api/api';
+import { Subscriber } from 'zeromq';
 
 @Injectable()
 export class GatewayService implements OnModuleInit {
@@ -14,13 +15,7 @@ export class GatewayService implements OnModuleInit {
   }
 
   onModuleInit() {
-    setInterval(async () => {
-      const latestBlockNumber = await this.getLatestBlock();
-      if (latestBlockNumber !== this.previousBlockNumber) {
-        this.updateBlock(latestBlockNumber);
-        this.previousBlockNumber = latestBlockNumber;
-      }
-    }, 3000);
+    this.startSocket();
   }
 
   private async getLatestBlock(): Promise<number> {
@@ -30,7 +25,27 @@ export class GatewayService implements OnModuleInit {
     return data.fullHeight;
   }
 
-  updateBlock(blockNumber: number) {
-    this.server.emit('new_block', blockNumber);
+  private async startSocket(): Promise<void> {
+    const sock = new Subscriber();
+
+    // Connect to the server
+    sock.connect(NODE_LISTENER_URL(isMainnet()));
+
+    sock.subscribe('newBlock');
+
+    for await (const [topic, msg] of sock) {
+      // Convert the topic and message to strings
+      const topicStr = topic.toString();
+      const msgStr = msg.toString();
+
+      if (topicStr === 'newBlock') {
+        const blockHash = msgStr.slice(0, 64);
+        this.updateBlock(blockHash);
+      }
+    }
+  }
+
+  updateBlock(blockHash: string) {
+    this.server.emit('new_block', blockHash);
   }
 }
