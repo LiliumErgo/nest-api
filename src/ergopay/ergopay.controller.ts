@@ -35,4 +35,9 @@ export class ErgoPayController {
     const shortCode = await this.ergoPayService.getAddress(uuid);
     return { address: shortCode };
   }
+
+  @Get('reducedTxLink/:uuid')
+  async getReducedTxLink(@Param('uuid') uuid: string): Promise<string> {
+    return await this.ergoPayService.getReducedTxLink(uuid);
+  }
 }

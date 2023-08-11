@@ -77,4 +77,20 @@ export class ErgoPayService {
       return 'null';
     }
   }
+
+  async getReducedTxLink(uuid: string): Promise<string> {
+    try {
+      const res = await axios.get(
+        `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls/${uuid}`,
+        {
+          headers: {
+            'x-api-key': `${LINK_SHORTNER_API_KEY()}`,
+          },
+        },
+      );
+      return res.data.longUrl;
+    } catch (error) {
+      return 'null';
+    }
+  }
 }
