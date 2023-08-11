@@ -19,7 +19,7 @@ export class ErgoPayService {
       const res = await axios.post(
         `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls`,
         {
-          longUrl: `ergopay:${base64Txn}`,
+          longUrl: base64Txn,
           findIfExists: false,
           validateUrl: false,
           forwardQuery: true,
@@ -78,7 +78,12 @@ export class ErgoPayService {
     }
   }
 
-  async getReducedTxLink(uuid: string): Promise<string> {
+  async getReducedTxLink(
+    uuid: string,
+    message: string,
+  ): Promise<
+    { reducedTx: string; message: string; messageSeverity: string } | string
+  > {
     try {
       const res = await axios.get(
         `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls/${uuid}`,
@@ -88,7 +93,12 @@ export class ErgoPayService {
           },
         },
       );
-      return res.data.longUrl;
+      const reducedTx: string = res.data.longUrl;
+      return {
+        reducedTx: reducedTx,
+        message: message,
+        messageSeverity: 'INFORMATION',
+      };
     } catch (error) {
       return 'null';
     }

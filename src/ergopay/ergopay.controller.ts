@@ -1,5 +1,12 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+} from '@nestjs/common';
 import { ErgoPayService } from './ergopay.service';
+import * as assert from 'assert';
 
 @Controller('ergopay')
 export class ErgoPayController {
@@ -36,8 +43,16 @@ export class ErgoPayController {
     return { address: shortCode };
   }
 
-  @Get('reducedTxLink/:uuid')
-  async getReducedTxLink(@Param('uuid') uuid: string): Promise<string> {
-    return await this.ergoPayService.getReducedTxLink(uuid);
+  @Get('reducedTxLink/:uuid/:message')
+  async getReducedTxLink(
+    @Param('uuid') uuid: string,
+    @Param('message') message: string,
+  ): Promise<{ reducedTx: string; message: string; messageSeverity: string }> {
+    const res = await this.ergoPayService.getReducedTxLink(uuid, message);
+    if (res === 'null') {
+      throw new HttpException('An error occurred', HttpStatus.BAD_REQUEST);
+    }
+    assert(typeof res !== 'string');
+    return res;
   }
 }
