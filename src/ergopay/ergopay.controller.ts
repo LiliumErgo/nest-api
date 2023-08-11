@@ -19,15 +19,15 @@ export class ErgoPayController {
   async generateAddressLink(
     @Param('uuid') uuid: string,
     @Param('address') address: string,
-  ): Promise<{ response: string }> {
+  ): Promise<{ message: string }> {
     const shortCode = await this.ergoPayService.createAddressLink(
       uuid,
       address,
     );
     if (shortCode) {
-      return { response: 'successfully connected' };
+      return { message: 'successfully connected' };
     }
-    return { response: 'connection failed' };
+    return { message: 'connection failed' };
   }
 
   @Get('address/:uuid')
