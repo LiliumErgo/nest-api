@@ -19,7 +19,7 @@ export class ErgoPayService {
       const res = await axios.post(
         `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls`,
         {
-          longUrl: base64Txn,
+          longUrl: `ergopay:${base64Txn}`,
           findIfExists: false,
           validateUrl: false,
           forwardQuery: true,
@@ -94,7 +94,7 @@ export class ErgoPayService {
           },
         },
       );
-      const reducedTx: string = res.data.longUrl;
+      const reducedTx: string = res.data.longUrl.slice(8);
       return {
         reducedTx: reducedTx,
         message: message,
