@@ -32,6 +32,7 @@ export class ErgoPayService {
       );
       return res.data.shortCode;
     } catch (error) {
+      console.log(error);
       return 'null';
     }
   }
