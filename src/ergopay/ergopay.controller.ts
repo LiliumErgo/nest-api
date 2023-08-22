@@ -43,12 +43,22 @@ export class ErgoPayController {
     return { address: shortCode };
   }
 
-  @Get('reducedTxLink/:uuid/:message')
+  @Get('reducedTxLink/:uuid/:message/:address')
   async getReducedTxLink(
     @Param('uuid') uuid: string,
     @Param('message') message: string,
-  ): Promise<{ reducedTx: string; message: string; messageSeverity: string }> {
-    const res = await this.ergoPayService.getReducedTxLink(uuid, message);
+    @Param('address') address: string,
+  ): Promise<{
+    reducedTx: string;
+    message: string;
+    messageSeverity: string;
+    p2pkaddress: string;
+  }> {
+    const res = await this.ergoPayService.getReducedTxLink(
+      uuid,
+      message,
+      address,
+    );
     if (res === 'null') {
       throw new HttpException('An error occurred', HttpStatus.BAD_REQUEST);
     }

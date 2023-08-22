@@ -82,8 +82,15 @@ export class ErgoPayService {
   async getReducedTxLink(
     uuid: string,
     message: string,
+    address: string,
   ): Promise<
-    { reducedTx: string; message: string; messageSeverity: string } | string
+    | {
+        reducedTx: string;
+        message: string;
+        messageSeverity: string;
+        p2pkaddress: string;
+      }
+    | string
   > {
     try {
       const res = await axios.get(
@@ -99,6 +106,7 @@ export class ErgoPayService {
         reducedTx: reducedTx,
         message: message,
         messageSeverity: 'INFORMATION',
+        p2pkaddress: address,
       };
     } catch (error) {
       return 'null';
