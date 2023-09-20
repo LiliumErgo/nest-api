@@ -54,22 +54,28 @@ export class ErgoPayService {
       return 'null';
     }
     try {
-      const res = await axios.post(
-        `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls`,
-        {
-          longUrl: `{"address":"${address}"}`,
-          findIfExists: false,
-          validateUrl: false,
-          forwardQuery: true,
-          customSlug: uuid,
-        },
-        {
-          headers: {
-            'x-api-key': `${LINK_SHORTNER_API_KEY()}`,
-          },
-        },
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
       );
-      return res.data.shortCode;
+      const uuid = uuidv4().substr(0, 6);
+
+      const { data, error } = await supabase
+        .from('ergopay_address')
+        .insert([
+          {
+            uuid: uuid,
+            address: address,
+          },
+        ])
+        .select();
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return 'null';
+      }
+      return uuid;
     } catch (error) {
       return 'null';
     }
@@ -77,15 +83,21 @@ export class ErgoPayService {
 
   async getAddress(uuid: string): Promise<string> {
     try {
-      const res = await axios.get(
-        `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls/${uuid}`,
-        {
-          headers: {
-            'x-api-key': `${LINK_SHORTNER_API_KEY()}`,
-          },
-        },
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
       );
-      return JSON.parse(res.data.longUrl).address;
+      const { data, error } = await supabase
+        .from('ergopay_address')
+        .select('*')
+        .eq('uuid', uuid);
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return 'null';
+      }
+      return data[0].address;
     } catch (error) {
       return 'null';
     }
@@ -109,7 +121,10 @@ export class ErgoPayService {
         SUPABASE_ERGOPAY_LINK(),
         SUPABASE_ERGOPAY_API_KEY(),
       );
-      const { data, error } = await supabase.from('ergopay').select('*').eq("uuid", uuid);
+      const { data, error } = await supabase
+        .from('ergopay')
+        .select('*')
+        .eq('uuid', uuid);
 
       if (error) {
         console.log('SupaBase Error');
