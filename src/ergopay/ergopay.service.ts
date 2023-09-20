@@ -58,7 +58,6 @@ export class ErgoPayService {
         SUPABASE_ERGOPAY_LINK(),
         SUPABASE_ERGOPAY_API_KEY(),
       );
-      const uuid = uuidv4().substr(0, 6);
 
       const { data, error } = await supabase
         .from('ergopay_address')
