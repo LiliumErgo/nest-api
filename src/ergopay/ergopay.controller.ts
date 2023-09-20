@@ -52,7 +52,7 @@ export class ErgoPayController {
     reducedTx: string;
     message: string;
     messageSeverity: string;
-    p2pkaddress: string;
+    address: string;
   }> {
     const res = await this.ergoPayService.getReducedTxLink(
       uuid,

@@ -18,4 +18,8 @@ export const NODE_LISTENER_URL = (isMainnet: boolean) =>
   )?.replace(/[\\/]+$/, '');
 export const LINK_SHORTNER_BACKEND_URL = () =>
   (process.env.LINK_SHORTNER_BACKEND_URL as string)?.replace(/[\\/]+$/, '');
+export const SUPABASE_ERGOPAY_LINK = () =>
+  (process.env.SUPABASE_ERGOPAY_LINK as string)?.replace(/[\\/]+$/, '');
+export const SUPABASE_ERGOPAY_API_KEY = () =>
+  (process.env.SUPABASE_ERGOPAY_API_KEY as string)?.replace(/[\\/]+$/, '');
 export const LINK_SHORTNER_API_KEY = () => process.env.LINK_SHORTNER_API_KEY;

@@ -28,6 +28,7 @@
     "@nestjs/platform-express": "^10.0.5",
     "@nestjs/platform-socket.io": "^10.0.5",
     "@nestjs/websockets": "^10.0.5",
+    "@supabase/supabase-js": "^2.34.0",
     "@types/jsonwebtoken": "^9.0.2",
     "axios": "^1.4.0",
     "ergo-lib-wasm-browser": "^0.24.0",
@@ -37,6 +38,7 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "socket.io": "^4.7.1",
+    "uuid": "^9.0.1",
     "zeromq": "6.0.0-beta.17"
   },
   "devDependencies": {

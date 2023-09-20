@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import { createClient } from '@supabase/supabase-js';
 import { Configuration, DefaultApiFactory } from '../explorerApi';
 import {
   EXPLORER_API_URL,
   LINK_SHORTNER_API_KEY,
   LINK_SHORTNER_BACKEND_URL,
+  SUPABASE_ERGOPAY_API_KEY,
+  SUPABASE_ERGOPAY_LINK,
 } from '../api/api';
 import { ErgoAddress } from '@fleet-sdk/core';
 
@@ -16,21 +20,29 @@ export class ErgoPayService {
   private readonly explorerClient = DefaultApiFactory(this.explorerConf);
   async generateErgoPayShortLink(base64Txn: string): Promise<string> {
     try {
-      const res = await axios.post(
-        `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls`,
-        {
-          longUrl: `ergopay:${base64Txn}`,
-          findIfExists: false,
-          validateUrl: false,
-          forwardQuery: true,
-        },
-        {
-          headers: {
-            'x-api-key': `${LINK_SHORTNER_API_KEY()}`,
-          },
-        },
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
       );
-      return res.data.shortCode;
+      const uuid = uuidv4().substr(0, 6);
+
+      const { data, error } = await supabase
+        .from('ergopay')
+        .insert([
+          {
+            uuid: uuid,
+            base_64: `ergopay:${base64Txn}`,
+          },
+        ])
+        .select();
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return 'null';
+      }
+
+      return uuid;
     } catch (error) {
       console.log(error);
       return 'null';
@@ -88,25 +100,29 @@ export class ErgoPayService {
         reducedTx: string;
         message: string;
         messageSeverity: string;
-        p2pkaddress: string;
+        address: string;
       }
     | string
   > {
     try {
-      const res = await axios.get(
-        `${LINK_SHORTNER_BACKEND_URL()}/rest/v3/short-urls/${uuid}`,
-        {
-          headers: {
-            'x-api-key': `${LINK_SHORTNER_API_KEY()}`,
-          },
-        },
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
       );
-      const reducedTx: string = res.data.longUrl.slice(8);
+      const { data, error } = await supabase.from('ergopay').select('*').eq("uuid", uuid);
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return 'null';
+      }
+
+      const reducedTx: string = data[0].base_64.slice(8);
       return {
         reducedTx: reducedTx,
         message: message,
         messageSeverity: 'INFORMATION',
-        p2pkaddress: address,
+        address: address,
       };
     } catch (error) {
       return 'null';
