@@ -22,4 +22,8 @@ export const SUPABASE_ERGOPAY_LINK = () =>
   (process.env.SUPABASE_ERGOPAY_LINK as string)?.replace(/[\\/]+$/, '');
 export const SUPABASE_ERGOPAY_API_KEY = () =>
   (process.env.SUPABASE_ERGOPAY_API_KEY as string)?.replace(/[\\/]+$/, '');
+export const SUPABASE_LILIUM_LINK = () =>
+    (process.env.SUPABASE_LILIUM_LINK as string)?.replace(/[\\/]+$/, '');
+export const SUPABASE_LILIUM_API_KEY = () =>
+    (process.env.SUPABASE_LILIUM_API_KEY as string)?.replace(/[\\/]+$/, '');
 export const LINK_SHORTNER_API_KEY = () => process.env.LINK_SHORTNER_API_KEY;
