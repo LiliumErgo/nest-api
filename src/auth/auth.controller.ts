@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { AuthService, Signature } from './auth.service';
 import { SupabaseService } from '../supabase/supabase.service';
+import { NonceService } from './nonceService';
 const jwt = require('jsonwebtoken');
 
 @Controller('auth')
@@ -15,6 +16,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly supabaseService: SupabaseService,
+
+    private readonly nonceService: NonceService,
   ) {}
 
   @Post('login')
@@ -27,6 +30,7 @@ export class AuthController {
       address,
     );
     if (!verificationStatus) {
+      console.log('address verification failed');
       throw new HttpException(
         'address verification failed',
         HttpStatus.UNAUTHORIZED,
@@ -89,57 +93,10 @@ export class AuthController {
   getHello(): { response: string } {
     return { response: 'hello' };
   }
-
   @Post('nonce')
   async nonce(@Body() body: { address: string }): Promise<any> {
     const { address } = body;
-    const nonce = Math.floor(Math.random() * 1000000).toString();
-    const supabase = this.supabaseService.getClient();
-
-    const { data, error } = await supabase
-      .from('users')
-      .select('address')
-      .eq('address', address);
-
-    if (error || data.length === 0) {
-      // Address not found, create new entry
-      const { error: insertError } = await supabase.from('users').insert({
-        address: address,
-        auth: {
-          genNonce: nonce,
-          lastAuth: new Date().toISOString(),
-          lastAuthStatus: 'pending',
-        },
-      });
-
-      if (insertError) {
-        console.log(insertError);
-        throw new HttpException(
-          'Error creating new entry',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-    } else {
-      // Address found, update the entry
-      const updateRes = await supabase
-        .from('users')
-        .update({
-          auth: {
-            genNonce: nonce,
-            lastAuth: new Date().toISOString(),
-            lastAuthStatus: 'pending',
-          },
-        })
-        .eq('address', address);
-
-      if (updateRes.error) {
-        throw new HttpException(
-          'Error updating nonce',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-    }
-
+    const nonce = await this.nonceService.createNonce(address);
     return { nonce };
   }
 }

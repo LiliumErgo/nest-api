@@ -17,30 +17,33 @@ export class AuthService {
 
   verifySignature(signature: Signature, address: string): boolean {
     try {
-      const arr: string[] = signature.signedMessage.split(';');
-
-      if (arr.length !== 4) {
-        return false;
-      }
-
-      const timestamp = parseInt(arr[this.TIMESTAMP], 10) * 1000;
-      const origin = arr[this.ORIGIN];
-
-      const moreThen10SecPassed = false;
-
-      if (moreThen10SecPassed) {
-        return false;
-      }
-
       const networkAddress =
         ErgoAddress.getNetworkType(address) === Network.Mainnet
           ? Address.from_mainnet_str(address)
           : Address.from_testnet_str(address);
 
+      const arr: string[] = signature.signedMessage.split(';');
+
+      if (arr.length === 4) {
+        const timestamp = parseInt(arr[this.TIMESTAMP], 10) * 1000;
+        const origin = arr[this.ORIGIN];
+
+        const moreThen10SecPassed = false;
+
+        if (moreThen10SecPassed) {
+          return false;
+        }
+        return verify_signature(
+          networkAddress,
+          Buffer.from(signature.signedMessage, 'utf-8'),
+          Buffer.from(signature.proof, 'hex'),
+        );
+      }
+
       return verify_signature(
         networkAddress,
         Buffer.from(signature.signedMessage, 'utf-8'),
-        Buffer.from(signature.proof, 'hex'),
+        Buffer.from(signature.proof, 'base64'),
       );
     } catch (e) {
       console.log(e);
