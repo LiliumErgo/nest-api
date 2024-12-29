@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import { Server } from 'socket.io';
-import { isMainnet, NODE_API_URL, NODE_LISTENER_URL} from '../api/api';
+import { isMainnet, NODE_API_URL, NODE_LISTENER_URL } from '../api/api';
 import { Subscriber } from 'zeromq';
 
 @Injectable()

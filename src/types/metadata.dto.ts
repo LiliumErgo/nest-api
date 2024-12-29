@@ -1,4 +1,3 @@
-
 interface CollectionInfo {
   collectionName: string;
   collectionDescription: string;
@@ -83,7 +82,7 @@ interface ResponseContract {
 }
 
 interface CollectionSubmission {
-  Contracts: ResponseContract
+  Contracts: ResponseContract;
 }
 
 interface NftMetadata {
@@ -117,10 +116,9 @@ interface NftStat {
   value: string;
 }
 
-
-interface Royalty{
-    address: string;
-    amount: number;
+interface Royalty {
+  address: string;
+  amount: number;
 }
 
 interface CollectionData {
@@ -132,7 +130,7 @@ interface CollectionData {
     collectionBannerImageURL: string;
     collectionCategory: string;
   };
-  socialMedia: { [k: string]: string; };
+  socialMedia: { [k: string]: string };
   royalty: Royalty[];
   saleStartTimestamp: number;
   saleEndTimestamp: number;
@@ -154,10 +152,10 @@ interface CollectionData {
 }
 
 interface SubmissionData {
-  transactionId: string,
-  userPK: string,
-  collectionDetails: CollectionData,
-  nft: NftMetadata[]
+  transactionId: string;
+  userPK: string;
+  collectionDetails: CollectionData;
+  nft: NftMetadata[];
 }
 
 interface ContractData {
@@ -169,10 +167,3 @@ interface ContractData {
   proxyContract: string;
   minerFeeNanoErg: number;
 }
-
-
-
-
-
-
-
