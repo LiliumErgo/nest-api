@@ -1,45 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { createClient } from '@supabase/supabase-js';
-import { Configuration, DefaultApiFactory } from '../explorerApi';
-import {
-  EXPLORER_API_URL,
-  SUPABASE_ERGOPAY_API_KEY,
-  SUPABASE_ERGOPAY_LINK,
-} from '../api/api';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { randomUUID } from 'node:crypto';
 import { ErgoAddress } from '@fleet-sdk/core';
-import { Signature } from '../auth/auth.service';
+import { Signature } from 'src/types/signature.dto';
+import { ErgoPay } from './entities/ergopay.entity';
+import { ErgoPayAddress } from './entities/ergopay-address.entity';
+import { ReducedTxLinkResponse } from 'src/types/ergopay.dto';
 
 @Injectable()
 export class ErgoPayService {
-  private readonly explorerConf = new Configuration({
-    basePath: EXPLORER_API_URL(),
-  });
-  private readonly explorerClient = DefaultApiFactory(this.explorerConf);
+  constructor(
+    @InjectRepository(ErgoPay)
+    private readonly ergoPayRepository: Repository<ErgoPay>,
+    @InjectRepository(ErgoPayAddress)
+    private readonly ergoPayAddressRepository: Repository<ErgoPayAddress>,
+  ) {}
+
   async generateErgoPayShortLink(base64Txn: string): Promise<string> {
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-      const uuid = uuidv4().substr(0, 6);
-
-      const { data, error } = await supabase
-        .from('ergopay')
-        .insert([
-          {
-            uuid: uuid,
-            base_64: `ergopay:${base64Txn}`,
-          },
-        ])
-        .select();
-
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return 'null';
-      }
-
+      const uuid = randomUUID().substring(0, 6);
+      const ergoPay = this.ergoPayRepository.create({
+        uuid,
+        base_64: `ergopay:${base64Txn}`,
+      });
+      await this.ergoPayRepository.save(ergoPay);
       return uuid;
     } catch (error) {
       console.log(error);
@@ -52,26 +37,11 @@ export class ErgoPayService {
       return 'null';
     }
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-
-      const { data, error } = await supabase
-        .from('ergopay_address')
-        .insert([
-          {
-            uuid: uuid,
-            address: address,
-          },
-        ])
-        .select();
-
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return 'null';
-      }
+      const ergoPayAddress = this.ergoPayAddressRepository.create({
+        uuid,
+        address,
+      });
+      await this.ergoPayAddressRepository.save(ergoPayAddress);
       return uuid;
     } catch (error) {
       return 'null';
@@ -83,21 +53,7 @@ export class ErgoPayService {
     verification: Signature,
   ): Promise<boolean> {
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-
-      const { data, error } = await supabase
-        .from('ergopay_address')
-        .update({ verification: verification })
-        .eq('uuid', uuid);
-
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return false;
-      }
+      await this.ergoPayAddressRepository.update({ uuid }, { verification });
       return true;
     } catch (error) {
       return false;
@@ -106,21 +62,7 @@ export class ErgoPayService {
 
   async writeNonce(uuid: string, nonce: string): Promise<boolean> {
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-
-      const { data, error } = await supabase
-        .from('ergopay_address')
-        .update({ nonce: nonce })
-        .eq('uuid', uuid);
-
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return false;
-      }
+      await this.ergoPayAddressRepository.update({ uuid }, { nonce });
       return true;
     } catch (error) {
       return false;
@@ -129,21 +71,10 @@ export class ErgoPayService {
 
   async getAddress(uuid: string): Promise<string | undefined> {
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-      const { data, error } = await supabase
-        .from('ergopay_address')
-        .select('*')
-        .eq('uuid', uuid);
-
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return undefined;
-      }
-      return data[0].address;
+      const result = await this.ergoPayAddressRepository.findOne({
+        where: { uuid },
+      });
+      return result?.address;
     } catch (error) {
       return undefined;
     }
@@ -151,21 +82,10 @@ export class ErgoPayService {
 
   async getProof(uuid: string): Promise<string | undefined> {
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-      const { data, error } = await supabase
-        .from('ergopay_address')
-        .select('*')
-        .eq('uuid', uuid);
-
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return undefined;
-      }
-      return data[0].verification.proof;
+      const result = await this.ergoPayAddressRepository.findOne({
+        where: { uuid },
+      });
+      return result?.verification?.proof;
     } catch (error) {
       return undefined;
     }
@@ -173,21 +93,10 @@ export class ErgoPayService {
 
   async getNonce(uuid: string): Promise<string | undefined> {
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-      const { data, error } = await supabase
-        .from('ergopay_address')
-        .select('*')
-        .eq('uuid', uuid);
-
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return undefined;
-      }
-      return data[0].nonce;
+      const result = await this.ergoPayAddressRepository.findOne({
+        where: { uuid },
+      });
+      return result?.nonce;
     } catch (error) {
       return undefined;
     }
@@ -197,37 +106,17 @@ export class ErgoPayService {
     uuid: string,
     message: string,
     address: string,
-  ): Promise<
-    | {
-        reducedTx: string;
-        message: string;
-        messageSeverity: string;
-        address: string;
-      }
-    | string
-  > {
+  ): Promise<ReducedTxLinkResponse | string> {
     try {
-      const supabase = createClient(
-        SUPABASE_ERGOPAY_LINK(),
-        SUPABASE_ERGOPAY_API_KEY(),
-      );
-      const { data, error } = await supabase
-        .from('ergopay')
-        .select('*')
-        .eq('uuid', uuid);
+      const result = await this.ergoPayRepository.findOne({ where: { uuid } });
+      if (!result) return 'null';
 
-      if (error) {
-        console.log('SupaBase Error');
-        console.log(error);
-        return 'null';
-      }
-
-      const reducedTx: string = data[0].base_64.slice(8);
+      const reducedTx = result.base_64.slice(8);
       return {
-        reducedTx: reducedTx,
-        message: message,
+        reducedTx,
+        message,
         messageSeverity: 'INFORMATION',
-        address: address,
+        address,
       };
     } catch (error) {
       return 'null';

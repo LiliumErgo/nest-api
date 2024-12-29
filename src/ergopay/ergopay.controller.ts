@@ -12,16 +12,49 @@ import { ErgoPayService } from './ergopay.service';
 import * as assert from 'assert';
 import { NonceService } from '../auth/nonceService';
 import { ErgoAddress, ErgoTree } from '@fleet-sdk/core';
-import { Signature } from '../auth/auth.service';
+import { Signature } from 'src/types/signature.dto';
+import { ConfigService } from '@nestjs/config';
+import {
+  ReducedTxLinkResponse,
+  ErgoPayAuthResponse,
+  ErgoPayVerificationResponse,
+} from 'src/types/ergopay.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBadRequestResponse,
+  ApiParam,
+  ApiBody,
+  ApiInternalServerErrorResponse,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { ErgoPayResponseDto } from './dto/ergopay.dto';
 
+@ApiTags('ErgoPay')
 @Controller('ergopay')
 export class ErgoPayController {
   constructor(
     private readonly ergoPayService: ErgoPayService,
     private readonly nonceService: NonceService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Get('generateShortLink/:base64Data')
+  @ApiOperation({ summary: 'Generate a short link for ErgoPay transaction' })
+  @ApiParam({
+    name: 'base64Data',
+    description: 'Base64 encoded transaction data',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Short link generated successfully',
+    type: ErgoPayResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error generating short link',
+  })
   async generateShortLink(
     @Param('base64Data') base64Data: string,
   ): Promise<{ shortCode: string }> {
@@ -32,6 +65,29 @@ export class ErgoPayController {
   }
 
   @Get('generateAddressLink/:uuid/:address')
+  @ApiOperation({ summary: 'Generate address link for ErgoPay' })
+  @ApiParam({
+    name: 'uuid',
+    description: 'Unique identifier',
+    required: true,
+  })
+  @ApiParam({
+    name: 'address',
+    description: 'Ergo address',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Address link generated successfully',
+    schema: {
+      properties: {
+        message: {
+          type: 'string',
+          example: 'successfully connected',
+        },
+      },
+    },
+  })
   async generateAddressLink(
     @Param('uuid') uuid: string,
     @Param('address') address: string,
@@ -47,15 +103,23 @@ export class ErgoPayController {
   }
 
   @Get('auth/:address')
-  async auth(@Param('address') address: string): Promise<{
-    userMessage: string;
-    address: string;
-    signingMessage: string;
-    sigmaBoolean: any;
-    messageSeverity: string;
-    replyTo: string;
-  }> {
-    const replyTo = `https://c356-128-119-202-176.ngrok-free.app/ergopay/verify?uuid=${address}`;
+  @ApiOperation({ summary: 'Initiate ErgoPay authentication' })
+  @ApiParam({
+    name: 'address',
+    description: 'Ergo address to authenticate',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Authentication initiated successfully',
+    type: ErgoPayAuthResponse,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error writing nonce',
+  })
+  async auth(@Param('address') address: string): Promise<ErgoPayAuthResponse> {
+    const apiUrl = this.configService.get<string>('API_URL');
+    const replyTo = `${apiUrl}/ergopay/verify?uuid=${address}`;
 
     const nonce = await this.nonceService.createNonce(address);
     const nonceWrite = await this.ergoPayService.writeNonce(address, nonce);
@@ -83,7 +147,25 @@ export class ErgoPayController {
   }
 
   @Post('verify')
-  async verify(@Query('uuid') uuid: string, @Body() body: Signature) {
+  @ApiOperation({ summary: 'Verify ErgoPay signature' })
+  @ApiQuery({
+    name: 'uuid',
+    description: 'Unique identifier',
+    required: true,
+  })
+  @ApiBody({ type: Signature })
+  @ApiResponse({
+    status: 200,
+    description: 'Signature verified successfully',
+    type: ErgoPayVerificationResponse,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error saving verification',
+  })
+  async verify(
+    @Query('uuid') uuid: string,
+    @Body() body: Signature,
+  ): Promise<ErgoPayVerificationResponse> {
     const result = await this.ergoPayService.writeVerification(uuid, body);
     if (!result) {
       throw new HttpException(
@@ -99,6 +181,27 @@ export class ErgoPayController {
   }
 
   @Get('address/:uuid')
+  @ApiOperation({ summary: 'Get address for UUID' })
+  @ApiParam({
+    name: 'uuid',
+    description: 'Unique identifier',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Address retrieved successfully',
+    schema: {
+      properties: {
+        address: {
+          type: 'string',
+          example: '9f4QF8AD1nQ3nJahQVkMj8hFSVVzVom77b52JU7EW71Zexg6N8',
+        },
+      },
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error getting address',
+  })
   async getAddress(@Param('uuid') uuid: string): Promise<{ address: string }> {
     const address = await this.ergoPayService.getAddress(uuid);
     if (!address) {
@@ -111,6 +214,27 @@ export class ErgoPayController {
   }
 
   @Get('proof/:uuid')
+  @ApiOperation({ summary: 'Get proof for UUID' })
+  @ApiParam({
+    name: 'uuid',
+    description: 'Unique identifier',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Proof retrieved successfully',
+    schema: {
+      properties: {
+        proof: {
+          type: 'string',
+          example: 'proofString',
+        },
+      },
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error getting proof',
+  })
   async getProof(@Param('uuid') uuid: string): Promise<{ proof: string }> {
     const proof = await this.ergoPayService.getProof(uuid);
     if (!proof) {
@@ -123,6 +247,27 @@ export class ErgoPayController {
   }
 
   @Get('nonce/:uuid')
+  @ApiOperation({ summary: 'Get nonce for UUID' })
+  @ApiParam({
+    name: 'uuid',
+    description: 'Unique identifier',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Nonce retrieved successfully',
+    schema: {
+      properties: {
+        nonce: {
+          type: 'string',
+          example: 'randomNonceString',
+        },
+      },
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error getting nonce',
+  })
   async getNonce(@Param('uuid') uuid: string): Promise<{ nonce: string }> {
     const nonce = await this.ergoPayService.getNonce(uuid);
     if (!nonce) {
@@ -135,16 +280,35 @@ export class ErgoPayController {
   }
 
   @Get('reducedTxLink/:uuid/:message/:address')
+  @ApiOperation({ summary: 'Get reduced transaction link' })
+  @ApiParam({
+    name: 'uuid',
+    description: 'Unique identifier',
+    required: true,
+  })
+  @ApiParam({
+    name: 'message',
+    description: 'Transaction message',
+    required: true,
+  })
+  @ApiParam({
+    name: 'address',
+    description: 'Ergo address',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Reduced transaction link retrieved successfully',
+    type: ReducedTxLinkResponse,
+  })
+  @ApiBadRequestResponse({
+    description: 'An error occurred',
+  })
   async getReducedTxLink(
     @Param('uuid') uuid: string,
     @Param('message') message: string,
     @Param('address') address: string,
-  ): Promise<{
-    reducedTx: string;
-    message: string;
-    messageSeverity: string;
-    address: string;
-  }> {
+  ): Promise<ReducedTxLinkResponse> {
     const res = await this.ergoPayService.getReducedTxLink(
       uuid,
       message,
