@@ -1,20 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import {
-  SUPABASE_ERGOPAY_API_KEY,
-  SUPABASE_ERGOPAY_LINK,
-  SUPABASE_LILIUM_API_KEY,
-  SUPABASE_LILIUM_LINK,
-} from '../api/api';
 
 @Injectable()
 export class SupabaseService {
   private readonly supabaseClient: SupabaseClient;
 
-  constructor() {
+  constructor(private configService: ConfigService) {
     this.supabaseClient = createClient(
-      SUPABASE_LILIUM_LINK(),
-      SUPABASE_LILIUM_API_KEY(),
+      this.configService.get<string>('SUPABASE_LILIUM_LINK'),
+      this.configService.get<string>('SUPABASE_LILIUM_API_KEY'),
     );
   }
 
