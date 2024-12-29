@@ -1,16 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { createClient } from '@supabase/supabase-js';
 import { Configuration, DefaultApiFactory } from '../explorerApi';
 import {
   EXPLORER_API_URL,
-  LINK_SHORTNER_API_KEY,
-  LINK_SHORTNER_BACKEND_URL,
   SUPABASE_ERGOPAY_API_KEY,
   SUPABASE_ERGOPAY_LINK,
 } from '../api/api';
 import { ErgoAddress } from '@fleet-sdk/core';
+import { Signature } from '../auth/auth.service';
 
 @Injectable()
 export class ErgoPayService {
@@ -80,7 +78,56 @@ export class ErgoPayService {
     }
   }
 
-  async getAddress(uuid: string): Promise<string> {
+  async writeVerification(
+    uuid: string,
+    verification: Signature,
+  ): Promise<boolean> {
+    try {
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
+      );
+
+      const { data, error } = await supabase
+        .from('ergopay_address')
+        .update({ verification: verification })
+        .eq('uuid', uuid);
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async writeNonce(uuid: string, nonce: string): Promise<boolean> {
+    try {
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
+      );
+
+      const { data, error } = await supabase
+        .from('ergopay_address')
+        .update({ nonce: nonce })
+        .eq('uuid', uuid);
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getAddress(uuid: string): Promise<string | undefined> {
     try {
       const supabase = createClient(
         SUPABASE_ERGOPAY_LINK(),
@@ -94,11 +141,55 @@ export class ErgoPayService {
       if (error) {
         console.log('SupaBase Error');
         console.log(error);
-        return 'null';
+        return undefined;
       }
       return data[0].address;
     } catch (error) {
-      return 'null';
+      return undefined;
+    }
+  }
+
+  async getProof(uuid: string): Promise<string | undefined> {
+    try {
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
+      );
+      const { data, error } = await supabase
+        .from('ergopay_address')
+        .select('*')
+        .eq('uuid', uuid);
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return undefined;
+      }
+      return data[0].verification.proof;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  async getNonce(uuid: string): Promise<string | undefined> {
+    try {
+      const supabase = createClient(
+        SUPABASE_ERGOPAY_LINK(),
+        SUPABASE_ERGOPAY_API_KEY(),
+      );
+      const { data, error } = await supabase
+        .from('ergopay_address')
+        .select('*')
+        .eq('uuid', uuid);
+
+      if (error) {
+        console.log('SupaBase Error');
+        console.log(error);
+        return undefined;
+      }
+      return data[0].nonce;
+    } catch (error) {
+      return undefined;
     }
   }
 
