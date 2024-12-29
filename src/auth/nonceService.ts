@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
-// import necessary dependencies, services etc.
 
 @Injectable()
 export class NonceService {

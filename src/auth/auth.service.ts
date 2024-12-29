@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Address, verify_signature } from 'ergo-lib-wasm-nodejs';
 import { ErgoAddress, Network } from '@fleet-sdk/core';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -86,7 +86,7 @@ export class AuthService {
   ): Promise<void> {
     const newNonce = Math.floor(Math.random() * 1000000).toString();
 
-    const { data: updatedData, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from('users')
       .update({
         auth: {
