@@ -1,14 +1,22 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Server } from 'socket.io';
-import { isMainnet, NODE_API_URL, NODE_LISTENER_URL } from '../api/api';
 import { Subscriber } from 'zeromq';
 
 @Injectable()
 export class GatewayService implements OnModuleInit {
-  private readonly nodeUrl: string = NODE_API_URL(isMainnet());
-  private previousBlockNumber: number;
+  private readonly nodeUrl: string;
   private server: Server;
+
+  constructor(private configService: ConfigService) {
+    const isMainnet = this.configService.get<string>('IS_MAINNET') === 'true';
+    this.nodeUrl = (
+      isMainnet
+        ? this.configService.get<string>('NODE_MAINNET_API_URL')
+        : this.configService.get<string>('NODE_TESTNET_API_URL')
+    )?.replace(/[\\/]+$/, '');
+  }
 
   setServer(server: Server) {
     this.server = server;
@@ -27,9 +35,14 @@ export class GatewayService implements OnModuleInit {
 
   private async startSocket(): Promise<void> {
     const sock = new Subscriber();
+    const isMainnet = this.configService.get<string>('IS_MAINNET') === 'true';
+    const listenerUrl = (
+      isMainnet
+        ? this.configService.get<string>('NODE_MAINNET_LISTENER_URL')
+        : this.configService.get<string>('NODE_TESTNET_LISTENER_URL')
+    )?.replace(/[\\/]+$/, '');
 
-    // Connect to the server
-    sock.connect(NODE_LISTENER_URL(isMainnet()));
+    sock.connect(listenerUrl);
 
     sock.subscribe('newBlock');
 
