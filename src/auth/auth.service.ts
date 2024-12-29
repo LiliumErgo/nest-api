@@ -2,13 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Address, verify_signature } from 'ergo-lib-wasm-nodejs';
 import { ErgoAddress, Network } from '@fleet-sdk/core';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { Signature } from 'src/types/signature.dto';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const jwt = require('jsonwebtoken');
-
-export interface Signature {
-  signedMessage: string;
-  proof: string;
-}
 
 @Injectable()
 export class AuthService {

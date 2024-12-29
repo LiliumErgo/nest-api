@@ -4,26 +4,52 @@ import {
   Body,
   HttpStatus,
   HttpException,
-  Get,
 } from '@nestjs/common';
-import { AuthService, Signature } from './auth.service';
+import { AuthService } from './auth.service';
 import { SupabaseService } from '../supabase/supabase.service';
 import { NonceService } from './nonceService';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiUnauthorizedResponse,
+  ApiInternalServerErrorResponse,
+} from '@nestjs/swagger';
+import {
+  ErrorResponseDto,
+  LoginResponseDto,
+  NonceResponseDto,
+} from './dto/auth-response.dto';
+import { LoginRequestDto, NonceRequestDto } from './dto/auth-request.dto';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const jwt = require('jsonwebtoken');
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly supabaseService: SupabaseService,
-
     private readonly nonceService: NonceService,
   ) {}
 
   @Post('login')
-  async authenticate(
-    @Body() body: { signature: Signature; nonce: string; address: string },
-  ): Promise<any> {
+  @ApiOperation({ summary: 'Authenticate user with signature' })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully authenticated',
+    type: LoginResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid signature or nonce',
+    type: ErrorResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+    type: ErrorResponseDto,
+  })
+  async authenticate(@Body() body: LoginRequestDto): Promise<LoginResponseDto> {
     const { signature, nonce, address } = body;
     const verificationStatus: boolean = this.authService.verifySignature(
       signature,
@@ -89,12 +115,18 @@ export class AuthController {
     };
   }
 
-  @Get('hello')
-  getHello(): { response: string } {
-    return { response: 'hello' };
-  }
   @Post('nonce')
-  async nonce(@Body() body: { address: string }): Promise<any> {
+  @ApiOperation({ summary: 'Generate nonce for wallet address' })
+  @ApiResponse({
+    status: 200,
+    description: 'Nonce successfully generated',
+    type: NonceResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error generating nonce',
+    type: ErrorResponseDto,
+  })
+  async nonce(@Body() body: NonceRequestDto): Promise<NonceResponseDto> {
     const { address } = body;
     const nonce = await this.nonceService.createNonce(address);
     return { nonce };
